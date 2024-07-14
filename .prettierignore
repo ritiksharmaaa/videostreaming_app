@@ -1,0 +1,7 @@
+# this file ignore some file where we don 't want to apply in some file ... ex : - env 
+/.vscode
+/node_modules
+./dist
+*.env
+.env
+.env* 

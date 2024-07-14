@@ -1,0 +1,1 @@
+export const db_name = "yout database name" // use thi sapproach in production 
