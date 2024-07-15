@@ -1,18 +1,24 @@
 // require("dotenv").config({path : './env'})
 import dotenv from "dotenv";
-import express  from "express";
 import connectDB   from "./db/index.js";
-  
+import {app} from "./app.js"
+    
 dotenv.config({path : './env'});
 
-connectDB()
+connectDB().then(()=>{
+    console.log("Db connected succfully in db callable file   ....")
+    app.listen(process.env.PORT , "localhost" , ()=>{
+        console.log("server is listen on port 3000 : http://localhost:3000")
+    })
+    
 
-
-const app = express()
-
-app.listen(process.env.PORT , "localhost" , ()=>{
-    console.log("server is listen on port 3000 : http://localhost:3000")
+}).catch((err)=>{
+    console.log(err , " erro from DB calling give promise ! ")
 })
+
+
+
+
 
 
 
