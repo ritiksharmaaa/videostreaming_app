@@ -1,9 +1,9 @@
-import { registerUser  , getUser  , updateUser , loginUser , logoutUser } from "../controllers/user.controller";
+import { registerUser  , getUser  , updateUser , loginUser , logoutUser } from "../controllers/user.controller.js";
 import  express from "express"
 
 const router  = express.Router()
 
-router.route("/user").get(getUser).post(registerUser)
+router.route("/user/register").get(getUser).post(registerUser)
 router.route("/user/login").get((req , res)=>{
     console.log("user login form rendered ! ")
 }).post(loginUser)

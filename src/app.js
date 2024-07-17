@@ -22,7 +22,7 @@ app.use(cookieParser());
 
 //  application route ;
 
-import userRoute from "./controllers/user.controller.js"
+import userRoute from "./routes/user.routes.js"
 
 
 // route declaration ;

@@ -1,7 +1,7 @@
 import mongoose, { Schema }  from "mongoose";
-import { jwt } from "jsonwebtoken";
+import jwt  from "jsonwebtoken";
 // import {bcryptjs } from "bcryptjs"
-import {bcrypt } from "bcrypt"
+import bcrypt  from "bcrypt"
 import process from "process"
 
 
