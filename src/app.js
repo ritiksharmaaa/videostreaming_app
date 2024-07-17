@@ -4,7 +4,6 @@ import cors from "cors";
 import path from "path";
 
 const app = express();
-app.use(cookieParser());
 app.use(
   cors({
     origin: process.env.CORS_ORIGIN,
@@ -18,7 +17,17 @@ app.use(
   })
 );
 app.use(express.urlencoded({ extended: true, limit: "20kb" }));
-app.use(express.static(path.resolve("/public")))
+app.use(express.static(path.resolve("/public")));
+app.use(cookieParser());
+
+//  application route ;
+
+import userRoute from "./controllers/user.controller.js"
+
+
+// route declaration ;
+
+app.use( "/account" , userRoute);
 
 app.get("/", (req, res) => {
   res.end("we are working ! ");

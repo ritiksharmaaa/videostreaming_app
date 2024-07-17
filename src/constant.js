@@ -1,1 +1,1 @@
-export const db_name = "yout database name" // use thi sapproach in production 
+export const db_name = "yout database name" // use this method to gice constant value 
