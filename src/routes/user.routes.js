@@ -1,14 +1,39 @@
-import { registerUser  , getUser  , updateUser , loginUser , logoutUser } from "../controllers/user.controller.js";
-import  express from "express"
+import {
+  registerUser,
+  getUser,
+  updateUser,
+  loginUser,
+  logoutUser,
+} from "../controllers/user.controller.js";
+import express from "express";
+import { upload } from "../middlewares/multer.middelware.js";
 
-const router  = express.Router()
+const router = express.Router();
 
-router.route("/user/register").get(getUser).post(registerUser)
-router.route("/user/login").get((req , res)=>{
-    console.log("user login form rendered ! ")
-}).post(loginUser)
-router.post("/user/logout" , logoutUser )
-router.post("/user/update").get((req ,res)=>{}).post(updateUser)
-
+router
+  .route("/user/register")
+  .get(getUser)
+  .post(
+    upload.fields([
+      { name: "avatar", maxCount: 1 },
+      {
+        name: "coverImage",
+        maxCount: 1,
+      },
+    ]),
+    // after middleware this can run 
+    registerUser
+  );
+router
+  .route("/user/login")
+  .get((req, res) => {
+    console.log("user login form rendered ! ");
+  })
+  .post(loginUser);
+router.post("/user/logout", logoutUser);
+router
+  .post("/user/update")
+  .get((req, res) => {})
+  .post(updateUser);
 
 export default router;

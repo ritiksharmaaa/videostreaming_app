@@ -31,7 +31,7 @@ const userSchema = mongoose.Schema(
     },
      avatar  : {
         type : String ,
-        required : true 
+        required : false
 
     },
     coverImage : {
@@ -61,7 +61,7 @@ const userSchema = mongoose.Schema(
 userSchema.pre("save" , async function (next){
     //  we have use this as well update time so we have to write like so it can work with update 
     if(!this.isModified("password")) return next();
-    this.password = bcrypt.hash(this.password , 10 ) // it hash data 10 round 
+    this.password =  await bcrypt.hash(this.password , 10 ) // it hash data 10 round 
     next()
 
 
