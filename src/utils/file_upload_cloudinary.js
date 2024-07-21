@@ -12,15 +12,17 @@ const uploadOnCloudniary = async (localFilePath)=>{
     try {
         if(!localFilePath) return null 
         //upload the file on cloudanary 
-        const res = await cloudinary.v2.uploader(localFilePath  , {resource_type : "auto"})
+        const res = await cloudinary.uploader.upload(localFilePath  , {resource_type : "auto"})
 
         //file uploaded succeffuly 
-        console.log("file is uploaded on cloudinary " , res.url);
+        fs.unlinkSync(localFilePath)
+        // console.log("file is uploaded on cloudinary " , res.url);
         return res
         
     } catch (error) {
         // remove local file in our server because we dont wan to failde or corupted data have on our server 
         fs.unlinkSync(localFilePath)
+        console.log(error , "error from cloudinasry ")
         
     }
 
