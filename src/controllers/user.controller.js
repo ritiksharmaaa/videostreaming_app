@@ -23,7 +23,7 @@ const registerUser = asyncHandler(async (req, res) => {
   // return response
 
   const { fullName, email, username, password } = req.body;
-  console.log(req.body, "checking password is comming or not ");
+  // console.log(req.body, "checking password is comming or not ");
 
   if (
     [fullName, email, username, password].some((field) => field?.trim() === "")
@@ -40,7 +40,7 @@ const registerUser = asyncHandler(async (req, res) => {
     // username // or email by which you can find user bu uniquely
     $or: [{ username }, { email }],
   });
-console.log("checking existed user have or not user : " ,existedUser )
+// console.log("checking existed user have or not user : " ,existedUser )
   if (existedUser) {
     throw new ApiError(
       409,
