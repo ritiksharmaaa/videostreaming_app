@@ -187,13 +187,31 @@ const loginUser = asyncHandler(async (req, res) => {
 });
 
 // -------------------------------------------------logout user -------------------------------
-// first user send user id when it click to logout // we get this id in req.parma 
+// first if user login they have someable to acces user id and send to server in front end in backend we have a req thre we add user data in req by auth middleware so we can access user id from there 
 // find user based  user id 
 // or use condition shwowing logoout button in front end // in server side we have attach a middleawre which check only login user call logout 
 // fetch data from db and update refreee token filed to be  null or empty 
 // we have to delete the cookie from user browser .
 
+
 const logoutUser = asyncHandler(async (req, res) => {
+  // const user = req.user // this came from auth middleware because it check jwt token and add a user object in req 
+  if (!req.user) return null ;
+  const user = User.findByIdAndUpdate(
+    req.user._id , {
+    $set :{ refreshToken : undefined} 
+  },
+  {
+    new : true // mean after this you will get updated refresstoken 
+  }
+)
+const options = {
+  httpOnly: true , // if httponly and secure true the cookie is only modfidable by server only 
+  secure : true ,
+
+}
+
+res.status(200).clearCookie("accessToken").clearCookie("refreshToken").json(ApiResponse(200 , {} , "user logout succefully ...."))
 
 });
 
