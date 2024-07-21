@@ -7,7 +7,28 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 
 // note : alway check file from bottom to up 
 // postman can send space also whichcreate conflict password_ _this is space which not shee but affect to access 
-// use trim data when user submit data because they add some extra space 
+// use trim data when user submit data because they add some extra space
+
+
+// srp follow based code for login 
+
+const generateAccessAndRefereshToken = async (userid)=>{
+  try {
+     const user = await User.findById(userid)
+     const accessToken =  user.generateAccessToken()
+     const refreshToken = user.generateRefreshToken()
+     user.refreshToken = refreshToken
+     await user.save({validateBeforeSave : false })// it say to shama dont ask about required fiedl just save this which i want to save . 
+   return { accessToken , refreshToken }
+
+    
+  } catch (error) {
+    console.log(error , " something went wrong while genrating ");
+  }
+
+}
+
+
 
 const registerUser = asyncHandler(async (req, res) => {
   // console.log("login user data in req " , req );
@@ -115,12 +136,83 @@ const registerUser = asyncHandler(async (req, res) => {
   // }
 });
 
+
+// ----------------------------------------------login --------------------------------------------------
+
+
+//  login user 
+//  get username and password 
+// check can this both field have in our req.body or not if null any of the object return api error 
+// check can user have in our db or not if not return redirect id ssr  or throu error in api res 
+// finduser from db 
+// check password is correct or not 
+// if correct than create acces token and refress token 
+// save token to user res.cookie , req.header.auth return  response token in json 
+
+
+
+const loginUser = asyncHandler(async (req, res) => {
+  const {username , password , email  } = req.body ; //you can take email as well 
+  if([username || email , password].some((field)=>{
+    field?.trim() == ""
+  })){
+    throw ApiError(400 , "username and password is required ...");
+  }
+  const user = await User.findOne({
+    $or: [{username : username} , {email : email }]  });
+  if(!user) throw ApiError(400 , "User Does not exist..");
+  const isPasswordCorrect = await user.isPasswordCorrect(password)
+  if(!isPasswordCorrect) throw new ApiError(401 , "User password is incorrect ....");
+  // follow srp of design pricipal not create token there intead create a function who gerate it and code segrigate .. 
+  // const accessToken = await user.generateAccessToken() // send to user 
+  // const refressToken = await user.generateRefreshToken() //save to db this token and send to user
+  const {accessToken , refreshToken } = await generateAccessAndRefereshToken(user._id) 
+  // option in appwrite when we login it send back user object so we can furthure do userbased operation --in api when you login you are login than next time when  you call get user detail to save in our state 
+  // so you can send user detail from here we use sign token data for server side requesting 
+  // send this user data so frontend can request base on user . 
+  const loggedInUser = await User.findById(user._id).select(" -password -refreshToken ")
+  const options = {
+    httpOnly: true , // if httponly and secure true the cookie is only modfidable by server only 
+    secure : true ,
+
+  }
+  
+  return res.status(200).cookie("accessToken" , accessToken , option ).cookie("refressToken" , refreshToken , options)
+  .json( new ApiResponse(200 , {
+    user : loggedInUser , accessToken , refreshToken
+    // why we send this data of user ans refress and acces token  when we send this data in cookie so , here we take case of mobile developer in mobile cookie not work so may we user can store this refress and accesstoken to user so next time is send this data manualyy in header .
+  } , "user logedIn User Succefully...."))
+
+
+});
+
+// -------------------------------------------------logout user -------------------------------
+// first user send user id when it click to logout // we get this id in req.parma 
+// find user based  user id 
+// or use condition shwowing logoout button in front end // in server side we have attach a middleawre which check only login user call logout 
+// fetch data from db and update refreee token filed to be  null or empty 
+// we have to delete the cookie from user browser .
+
+const logoutUser = asyncHandler(async (req, res) => {
+
+});
+
+// update User 
+
+
 const updateUser = asyncHandler(async (req, res) => {});
+
+// delete user 
+
+
 const deleteUser = asyncHandler(async (req, res) => {});
+
+// get User
 const getUser = asyncHandler(async (req, res) => {
   res.end(" i am working well get method og user or form  ");
 });
-const loginUser = asyncHandler(async (req, res) => {});
-const logoutUser = asyncHandler(async (req, res) => {});
+
+// logout User 
+
 
 export { registerUser, updateUser, deleteUser, getUser, logoutUser, loginUser };

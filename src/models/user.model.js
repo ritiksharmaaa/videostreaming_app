@@ -67,6 +67,7 @@ userSchema.pre("save" , async function (next){
 
 })
 
+// this method work on instace of the User it not run with User it run with const user = User.finsby() that user.methos is work 
 userSchema.methods.isPasswordCorrect = async function(password){
     return await  bcrypt.compare(password , this.password)
 
