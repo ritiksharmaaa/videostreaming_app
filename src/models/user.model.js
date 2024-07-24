@@ -1,6 +1,6 @@
 import mongoose, { Schema }  from "mongoose";
 import jwt  from "jsonwebtoken";
-// import {bcryptjs } from "bcryptjs"
+// import {bcryptjs  } from "bcryptjs"
 import bcrypt  from "bcrypt"
 import process from "process"
 
@@ -83,9 +83,11 @@ userSchema.methods.generateAccessToken =  async function(){
 
         } , 
         process.env.ACCESS_TOKEN_SECRET ,
+        { algorithm: 'HS256' },
         {
             expiresIn : process.env.ACCESS_TOKEN_EXPIRY
         }
+        
 
     )
 
@@ -96,6 +98,7 @@ userSchema.methods.generateRefreshToken = async function(){
             _id : this._id,
         } , 
         process.env.REFRESS_TOKEN_SECRET ,
+        { algorithm: 'HS256' },
         {
             expiresIn : process.env.REFRESS_TOKEN_EXPIRY
         }

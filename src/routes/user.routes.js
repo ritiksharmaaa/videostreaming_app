@@ -6,6 +6,7 @@ import {
   logoutUser,
 } from "../controllers/user.controller.js";
 import express from "express";
+import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/multer.middelware.js";
 
 const router = express.Router();
@@ -30,7 +31,7 @@ router
     console.log("user login form rendered ! ");
   })
   .post(loginUser);
-router.post("/user/logout", logoutUser);
+router.route("/user/logout",).post( verifyJWT ,  logoutUser);
 router
   .post("/user/update")
   .get((req, res) => {})

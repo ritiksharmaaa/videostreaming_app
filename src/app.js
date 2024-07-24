@@ -2,6 +2,9 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import path from "path";
+// import {JWTVerifyMiddleware} from "./middlewares/auth.middleware.js"
+
+
 
 const app = express();
 app.use(
@@ -13,12 +16,19 @@ app.use(
 
 app.use(
   express.json({
-    limit: "20kb",
+    limit: "2000kb",
   })
 );
 app.use(express.urlencoded({ extended: true, limit: "20kb" }));
 app.use(express.static("public"))
 app.use(cookieParser());
+
+// middleware --------------------------
+// app.use(JWTVerifyMiddleware)
+
+
+
+
 
 //  application route ;
 
