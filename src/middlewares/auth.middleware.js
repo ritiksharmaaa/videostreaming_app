@@ -4,8 +4,9 @@ import jwt from "jsonwebtoken"
 import { User } from "../models/user.model.js";
 
 export const verifyJWT = asyncHandler(async(req, _, next) => {
-    console.log("middleware trigger " , req );
+    console.log("middleware trigger " , req.cookies.accessToken );
     try {
+        // postman is acrual redusing the token it not send properly token so erro are comming 
         const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "")
         console.log( typeof token , "checkign token is comming or not ");
         
@@ -15,7 +16,7 @@ export const verifyJWT = asyncHandler(async(req, _, next) => {
             throw new ApiError(401, "Unauthorized request")
         }
     
-        const decodedToken = jwt.verify(JSON.stringify(token), process.env.ACCESS_TOKEN_SECRET)
+        const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
         console.log(decodedToken);
     
         const user = await User.findById(decodedToken?._id).select("-password -refreshToken")
