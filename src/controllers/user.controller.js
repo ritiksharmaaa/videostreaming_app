@@ -329,10 +329,12 @@ const updateUserDetail = asyncHandler(async (req, res) => {
       fullname : fullname ,
       email : email 
     }
-  }, {new : true})
-}).select("-password")
+  }, {new : true}).select("-password")
 
-res.status(200).json(new ApiResponse(200 , user , "account details update successfully"))
+  res.status(200).json(new ApiResponse(200 , user , "account details update successfully"))
+
+})
+
 
 
 // ------------------------------------------update user avatar -----------------------------------
@@ -448,12 +450,77 @@ const updateUserCoverImage = asyncHandler(async(req , res)=>{
   ])
 console.log(channel ,"checking what type of data we are gettin gfrom channel aggregration");
 
-  })
-  if(!channel?.length) {
-    throw new ApiError(404 , "channel does not exists ..")
-  }
+if(!channel?.length) {
+  throw new ApiError(404 , "channel does not exists ..")
+}
 
-  return res.status(200).json(new ApiResponse(200 , channel[0] , "user Channel fetched succefully " ))
+return res.status(200).json(new ApiResponse(200 , channel[0] , "user Channel fetched succefully" ))
+
+  })
+
+  // -------------------------------------get user watch history -------------------------------------
+  // here we have to nested lookup inside lookup 
+
+// flow of lookup  first we find user object from user document 
+// we have a watch history object  field which point out to video id mean lot of video i d
+// each video tBLE HAVE OWNER FIELD which is user so we have to use nested loop to user field in piline inside watch historu
+
+
+
+  const getUserWatchHistory = asyncHandler(async(req, res)=>{
+    // const userid = req.user._id  this give not id actual it give object("id number ") req.id give you this object id but when you pass this id in mongoose it covert or find real id which help to furthure query . 
+    // so in seniou developer they manully extract th user id from this object id  because in aggregation object id is not work you have to give full id not object id .
+    const user = await User.aggregate([
+      {
+        $match : {
+          _id : mongoose.Types.ObjectId(req.user._id), // here this method help to get actual id from object id 
+        }
+      },
+      {
+        $lookup : {
+          from : "videos" ,// here in str no matter of uppercase and lowercase 
+          localField : "watchHistory",
+          foreignField : "_id",
+          as : "watchHistory", //now we get nothing it just lot og object or array which we store in user object 
+          //now we furthure doing lookup in each object . 
+          pipeline : [
+            {
+              $lookup : {
+                from : "users",
+                localField : "owner",
+                foreignField : "_id",
+                as : "owner" ,// her ewe are getting entire user data which we want 't 
+
+              // so fro getting less daat we can add another pipeline 
+              pipeline : [
+                {
+                  $project : {
+                    fullName,
+                    username , 
+                    avatar ,
+                    
+                  }
+                }
+              ]
+              }
+            },
+            //adding this for  fronend  engineare to get this data not in array in object 
+            {
+              $addFields : {
+                owner : {
+                  $first : "$owner"
+                }
+              }
+            }
+          ]
+
+        }
+      }
+    ])
+
+    return  res.status(200).json(new ApiResponse(200 , user[0].watchHistory , "fetched  user history succefully... "))
+
+  })
    
 
 
@@ -481,5 +548,6 @@ export {
   changeCurrentPassword,
   getCurrentUser,
   getUserChannelProfile,
+  getUserWatchHistory,
 
 };
