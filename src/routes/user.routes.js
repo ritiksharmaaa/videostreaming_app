@@ -4,6 +4,8 @@ import {
   updateUser,
   loginUser,
   logoutUser,
+  refreshAccessToken,
+  updateUserDetail
 } from "../controllers/user.controller.js";
 import express from "express";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
@@ -32,9 +34,11 @@ router
   })
   .post(loginUser);
 router.route("/user/logout",).post( verifyJWT ,  logoutUser);
+
+router.route("/user/refresstoken").get(refreshAccessToken)
 router
-  .post("/user/update")
-  .get((req, res) => {})
-  .post(updateUser);
+  .route("/user/update")
+  .get((req, res) => {}) // here this work if we are doing server side rendring so we send a html form which render in client machine .
+  .post( verifyJWT , updateUserDetail);
 
 export default router;

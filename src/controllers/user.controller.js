@@ -3,6 +3,8 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { uploadOnCloudniary } from "../utils/file_upload_cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import jwt from "jsonwebtoken";
+import { json } from "express";
 
 // note : alway check file from bottom to up
 // postman can send space also whichcreate conflict password_ _this is space which not shee but affect to access
@@ -185,12 +187,12 @@ const loginUser = asyncHandler(async (req, res) => {
   const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
     user._id
   );
-  console.log(accessToken,  "and" , refreshToken);
+  console.log(accessToken, "and", refreshToken);
   // option in appwrite when we login it send back user object so we can furthure do userbased operation --in api when you login you are login than next time when  you call get user detail to save in our state
   // so you can send user detail from here we use sign token data for server side requesting
   // send this user data so frontend can request base on user .
   const loggedInUser = await User.findById(user._id).select(
-    " -password -refreshToken "
+    " -password -refreshToken"
   );
   // console.log("checking which user is login " , loggedInUser);
   const options = {
@@ -247,11 +249,137 @@ const logoutUser = asyncHandler(async (req, res) => {
     .clearCookie("refreshToken", options)
     .json(new ApiResponse(200, {}, "User logged Out"));
 });
+
+//  refress token  if user acces token expire we check if it hase refress token we get id from there than check can refress token is match with there db or not if match redirect to new endpoint which refress the access token as well refress token
+
+const refressAccessToken = asyncHandler(async (req, res) => {
+  try {
+    const incommingrefreshToken = req.cookies?.refreshToken;
+    if (!incommingrefreshToken)
+      throw new ApiError(
+        400,
+        "refresh token is reuired to generate new access token ! "
+      );
+    const isvalid = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+    if (!isvalid) throw new Error(400, "Refresh token is invalid ");
+    const user = User.findById(isvalid._id).select(
+      "-passwword -fullname -email -username"
+    );
+    if (!user) throw new ApiError(400, "token is not valid");
+    if (user?.refreshToken !== incommingrefreshToken) {
+      throw new ApiError(401, "refress token is expired or used");
+    }
+    const { newAccessToken, newRefreshToken } =
+      await generateAccessAndRefreshToken(user._id);
+    options = {
+      httpOnly: true,
+      secure: true,
+    };
+    return res
+      .status(200)
+      .cookie("accessToken", newAccessToken, options)
+      .cookie("refressToken", newRefreshToken, options)
+      .json(
+        new ApiResponse(
+          200,
+          { accessToken: newAccessToken, refreshToken: newRefreshToken },
+          "Access Token Refresh"
+        )
+      );
+  } catch (error) {
+    console.log(error, "error while refreshing token ");
+    throw new ApiError(401, error?.message || "invalid refresh token ");
+  }
+});
+
+const changeCurrentPassword = asyncHandler(async (req, res) => {
+  // no need to chekc use have or not we put middleware in url
+  const { oldPassword, newPassword, confPassword } = req.body; //you can also get againnewpassword for checking passwor dis correct or not but thi stype of thing happening in frontend
+  if (newPassword === confPassword)
+    throw new ApiError(400, "password and confirm passsword is not matched ! "); // this thing we have do in frontend site so we have to utilize client processor not our server process .
+  const user = await User.findById(req.user?._id);
+  const isoldPasswordTrue = await user.isPasswordCorrect(oldPassword);
+  if (!isoldPasswordTrue)
+    throw new ApiError(400, "old password is incorrect....");
+  user.password = newPassword;
+  await user.save({ validateBeforeSave: false });
+  return res
+    .status(200)
+    .json(new ApiError(200, {}, "password change succefully"));
+});
+
+const getCurrentUser = asyncHandler(async (req, res) => {
+  return res
+    .status(200)
+    .json(new ApiResponse(200, req.user, "current user fetched succefullly "));
+});
+
 // update User
+// this thing which have in our user model 
+// username email email ---  avatar coverImage  nee anoher url to update --- watchHistory watch history , refreshToken are edit by server only 
 
-const updateUser = asyncHandler(async (req, res) => {});
+const updateUserDetail = asyncHandler(async (req, res) => {
+  const { email , fullname } = req.body ; // geting data fro user to update in user detail if you working with file make sure you have anohter end point just like in text we update from form but for img we click on that than uplod new get thst new image 
+  if(!(fullname || email)){
+    throw new ApiError(400 , "All fiel are required ! ")
+  }
+  const user = User.findByIdAndUpdate(req.user?._id ,{
+    $set : {
+      fullname : fullname ,
+      email : email 
+    }
+  }, {new : true})
+}).select("-password")
 
-// delete user
+res.status(200).json(new ApiResponse(200 , user , "account details update successfully"))
+
+
+// ------------------------------------------update user avatar -----------------------------------
+// here we ar enot use request.files because in user creationtime we are getting array of file so we use uplod.files here we upload single upload 
+const updateUserAvatar = asyncHandler(async(req , res)=>{
+const avatarFile = req.file?.avatar 
+if (!avatarFile){ throw new ApiError(400 ,  "please upload valid profile avatar is required ! ")}
+const avatar = await uploadOnCloudniary(avatarFile);
+if (!avatar.url) {throw new ApiError(500 , "please try after something server error ")}
+const user = await User.findByIdAndUpdate(req.user?._id , { 
+  $set : {
+    avatar : avatar.url
+  }
+} , {new : true }).select("-password")
+
+return res.status(200).json(new ApiResponse(200 , user , "user avatar update successfully"))
+
+
+
+
+
+
+})
+// --------------------------------------------update cover image of user detail ---------
+
+const updateUserCoverImage = asyncHandler(async(req , res)=>{
+  const coverImage  = req.file?.coverImage 
+  if (!coverImage){ throw new ApiError(400 ,  "please upload valid profile avatar is required ! ")}
+  const avatar = await uploadOnCloudniary(coverImage);
+  if (!coverImage.url) {throw new ApiError(500 , "please try after something server error ")}
+  const user = await User.findByIdAndUpdate(req.user?._id , { 
+    $set : {
+      coverImage : coverImage.url
+    }
+  } , {new : true }).select("-password")
+  
+  return res.status(200).json(new ApiResponse(200 , user , "user avatar update successfully"))
+  
+  
+  
+  
+  
+  
+  })
+   
+
+
+//------------------------------------------------ delete user
 
 const deleteUser = asyncHandler(async (req, res) => {});
 
@@ -262,4 +390,17 @@ const getUser = asyncHandler(async (req, res) => {
 
 // logout User
 
-export { registerUser, updateUser, deleteUser, getUser, logoutUser, loginUser };
+export {
+  refressAccessToken,
+  registerUser,
+  updateUserDetail,
+  updateUserAvatar,
+  updateUserCoverImage,
+  deleteUser,
+  getUser,
+  logoutUser,
+  loginUser,
+  changeCurrentPassword,
+  getCurrentUser,
+
+};

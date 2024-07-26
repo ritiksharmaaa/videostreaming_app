@@ -1,7 +1,7 @@
 export {ApiResponse };
 
 class ApiResponse{
-    constructor( data , message , statusCode ){
+    constructor(statusCode ,  data , message ,  ){
         this.message = message 
         this.statusCode = statusCode 
         this.data = data 
