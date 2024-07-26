@@ -1,4 +1,5 @@
-import { User } from "../models/user.model.js";
+import { User  } from "../models/user.model.js";
+import {Subscription} from "../models/subscription.model.js"
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { uploadOnCloudniary } from "../utils/file_upload_cloudinary.js";
@@ -376,6 +377,83 @@ const updateUserCoverImage = asyncHandler(async(req , res)=>{
   
   
   })
+
+  // ---------------------------------------------------------getuserchanel profile ----
+
+  const getUserChannelProfile  = asyncHandler (async(req , res)=>{
+    const {username} = req.params
+    if (!username?.trim()){
+      throw new ApiError(200 , "username is missing ")
+
+    }
+    // User.find({username}) // here you have get id than do aggragation means multiple query we dont we can direclty do aggregation 
+    const channel = await  User.aggregate([{
+      $match : {
+        username: username?.toLowerCase()
+      }
+      
+    }, {
+      $lookup: {
+        from : "Subscription",
+        localField : "_id",
+        foreignField : "channel",
+        as : "subscribers"
+      }
+    },
+    {
+      $lookup : {
+        from : "Subscription",
+        localField : "_id",
+        foreignField : "subscriber",
+        as : "subscribeTo"
+      }
+    },
+    {
+      $addFields : {
+        subscriberCount : {
+          $size : "$subscribers"
+        },
+        subscriberToCount :{
+          $size : "$subscribeTo"
+        },
+        isSubscribed : {
+          $cond : {
+            if : {$in : [req.user?._id , "subscribers.subscriber"]}, // $in work bith both array and object 
+            then : true ,
+            else : false
+          }
+        }
+      },
+      
+
+    },
+    {
+      $project : {
+        // in projected we want to decide what we have to pass in final object we just put 1  to clarify. 
+        fullName : 1, 
+        username : 1 ,
+        subscriberCount : 1 ,
+        subscriberToCount : 1 ,
+        isSubscribed : 1 ,
+        avatar : 1 ,
+        coverImage : 1 ,
+        email : 1 
+
+        
+      }
+
+    }
+  
+  
+  ])
+console.log(channel ,"checking what type of data we are gettin gfrom channel aggregration");
+
+  })
+  if(!channel?.length) {
+    throw new ApiError(404 , "channel does not exists ..")
+  }
+
+  return res.status(200).json(new ApiResponse(200 , channel[0] , "user Channel fetched succefully " ))
    
 
 
@@ -402,5 +480,6 @@ export {
   loginUser,
   changeCurrentPassword,
   getCurrentUser,
+  getUserChannelProfile,
 
 };

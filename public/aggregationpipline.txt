@@ -1,0 +1,50 @@
+dataemplloye = {
+    id = 1 
+    rohan : 1,
+    name : sharma,
+    work hero 
+}
+company  = {
+    company name : xyz ,
+    employeid = dataemplloye.id
+
+}
+
+now we want to get that liek whenevr we get company detail so we wan the employe id have a object of employe detail .
+that whu we are writing aggragtion pipeline .
+
+
+
+
+[
+    {
+        $lookup(syntax we have lot more ) : {
+            from : employe  // name of that data where our id have  
+            localfield : employeid  // local filed name in which vr we save employe id 
+            foreignFiel :_id  we are targting whcih key in upper empoloyee data 
+            as : "result or authoredetail " // here our match or query data came in result which is actually an array  0 inddex have object of data  you can futhure do operation on that array . 
+
+
+            //supose you wan to get this data into object not  in array 
+            we have mutile way to do it we can store this array in varibale than we get data in object 
+            // but we can use another pipeline to do this 
+
+        }
+    }, first pipeline  actual find data based on some parameter 
+    {
+        // ad field add extra data in you r data like inmodel we haev first name and last namde but dont have full name we can do it here also we have option to do in qury fuunction in schema 
+
+        $addFields : {
+            fieldname : object data which you pass 
+        
+            authoredetail   : { calculation for the fullname
+                $first : "$result " means resulted data attach in aggragtiondata  ///// first mean first obj of upper resulted array .
+                // or 
+                $arrayElementAt : ["$authoredetail"]
+
+            }
+
+        }
+    },second pipe line  is adding thise field in aggragtiondata 
+    {}, third pipe like 
+]
